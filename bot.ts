@@ -24,8 +24,8 @@ async function getOpenAIResponse(message: string): Promise<string> {
     return completion.choices[0].message.content;
 }
 
-// Handling messages from Telegram users
-bot.hears(/(?:^|\s)(bri|бри)(?:$|[\s.?!,])/iu, async (ctx) => {
+// Common function to handle responses
+async function handleUserMessage(ctx: any) {
     const userMessage = ctx.message.text;
     try {
         const aiResponse = await getOpenAIResponse(userMessage);
@@ -39,6 +39,11 @@ bot.hears(/(?:^|\s)(bri|бри)(?:$|[\s.?!,])/iu, async (ctx) => {
             { reply_to_message_id: ctx.message.message_id }
         );
     }
+}
+
+// Handling messages from Telegram users
+bot.hears(/(?:^|\s)(bri|бри)(?:$|[\s.?!,])/iu, async (ctx) => {
+    await handleUserMessage(ctx);
 });
 
 // Handling replies to bot messages
@@ -47,19 +52,7 @@ bot.on('message', async (ctx) => {
         ctx.message.reply_to_message &&
         ctx.message.reply_to_message.from?.id === bot.botInfo?.id
     ) {
-        const userMessage = ctx.message.text;
-        try {
-            const aiResponse = await getOpenAIResponse(userMessage);
-            await ctx.reply(aiResponse, {
-                reply_to_message_id: ctx.message.message_id,
-            });
-        } catch (error) {
-            console.error('Error when interacting with OpenAI:', error);
-            await ctx.reply(
-                'Sorry, there was an error processing your request. Please try again later.',
-                { reply_to_message_id: ctx.message.message_id }
-            );
-        }
+        await handleUserMessage(ctx);
     }
 });
 
