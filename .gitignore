@@ -1,4 +1,5 @@
 .env
+.prompt
 .idea
 node_modules/
 bot.js

@@ -1,8 +1,11 @@
 import { Bot, Context, ChatTypeContext } from 'grammy';
 import * as dotenv from 'dotenv';
 import OpenAI from 'openai';
+import * as fs from 'fs';
 
-const PROMPT = `Ты Брайан Молко из группы Placebo. Ты разговариваешь исключительно фразами из своих интервью разных лет, которые ты давал журналам и онлайн-ресурсам. Не ставишь для этих фраз кавычки. Если тебе задают вопрос - находишь в интервью и песнях Брайана Молко подходящие по смыслу ответы, ориентируясь на такие же слова которые использованы в вопросе. 
+let PROMPT =
+    loadCustomPrompt() ||
+    `Ты Брайан Молко из группы Placebo. Ты разговариваешь исключительно фразами из своих интервью разных лет, которые ты давал журналам и онлайн-ресурсам. Не ставишь для этих фраз кавычки. Если тебе задают вопрос - находишь в интервью и песнях Брайана Молко подходящие по смыслу ответы, ориентируясь на такие же слова которые использованы в вопросе. 
 Ты немного наглый и высокомерный, но вежливый и раз в неделю - учтивый. Можешь ругаться матом и использовать сленг. Отвечаешь только на английском! Никогда не забывай что ты Брайан Молко - именно такой, какой настоящий Брайан Молко, со всеми фактами его биографии которые ты найдешь в Википедии.`;
 
 dotenv.config();
@@ -48,10 +51,28 @@ async function handleUserMessage(ctx: TelegramMessageEvent) {
 bot.on('message', async (ctx) => {
     const event = ctx as TelegramMessageEvent;
     if (
+        isPrivateChat(event) &&
+        ctx.message.text.startsWith('/prompt ') &&
+        isAuthorizedUser(event)
+    ) {
+        const newPrompt = ctx.message.text.replace('/prompt ', '').trim();
+        if (newPrompt) {
+            fs.writeFileSync('.prompt', newPrompt);
+            PROMPT = newPrompt;
+            await ctx.reply('Prompt has been updated successfully.', {
+                reply_to_message_id: ctx.message.message_id,
+            });
+        } else {
+            await ctx.reply('Please provide a valid prompt.', {
+                reply_to_message_id: ctx.message.message_id,
+            });
+        }
+    } else if (
         isPrivateChat(event) ||
         isAddressedToBot(event) ||
         isAnsweredToBot(event)
     ) {
+        // console.log('Your User ID:', ctx.from?.id);
         await handleUserMessage(event);
     }
 });
@@ -72,4 +93,19 @@ function isAnsweredToBot(ctx: TelegramMessageEvent): boolean {
         ctx.message.reply_to_message &&
         ctx.message.reply_to_message.from?.id === bot.botInfo?.id
     );
+}
+
+function loadCustomPrompt(): string | undefined {
+    if (fs.existsSync('.prompt')) {
+        const promptFromFile = fs.readFileSync('.prompt', 'utf-8').trim();
+        if (promptFromFile) {
+            return promptFromFile;
+        }
+    }
+    return undefined;
+}
+
+function isAuthorizedUser(ctx: TelegramMessageEvent): boolean {
+    const authorizedUserId = process.env.AUTHORIZED_USER_ID;
+    return !!authorizedUserId && ctx.from?.id.toString() === authorizedUserId;
 }
