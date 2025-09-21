@@ -72,13 +72,14 @@ Bot responds in two cases:
 ## Project Structure
 
 ```
-├── bot.ts              # Main bot file
-├── bot.js              # Compiled version
-├── package.json        # Project dependencies
-├── tsconfig.json       # TypeScript configuration
-├── README.md           # Documentation
-├── .env               # Environment variables (not in git)
-└── .prompt            # Custom prompt (created automatically)
+├── bot.ts                  # Main bot file
+├── bot.js                  # Compiled version
+├── package.json            # Project dependencies
+├── tsconfig.json           # TypeScript configuration
+├── ecosystem.config.cjs    # PM2 configuration for production
+├── README.md               # Documentation
+├── .env                   # Environment variables (not in git)
+└── .prompt                # Custom prompt (created automatically)
 ```
 
 ## Development
@@ -144,7 +145,7 @@ NODE_ENV=production
 3. **Start with PM2:**
 ```bash
 # Start bot using ecosystem config
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 
 # Save PM2 configuration
 pm2 save
