@@ -89,3 +89,104 @@ npx tsx bot.ts  # Run with automatic recompilation
 ```
 
 Project uses ES modules (`"type": "module"` in package.json).
+
+## Production Deployment with PM2
+
+### Prerequisites on Debian Server
+
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Node.js (version 18+)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Install PM2 and tsx globally
+sudo npm install -g pm2 tsx
+```
+
+### Deployment Steps
+
+1. **Deploy code to server:**
+```bash
+# Create directory
+mkdir -p /home/telegram-molko-bot
+cd /home/telegram-molko-bot
+
+# Clone repository or upload files
+git clone https://github.com/pravbeseda/telegram-molko-bot.git .
+
+# Install dependencies
+npm install
+
+# Create logs directory
+mkdir -p logs
+```
+
+2. **Configure environment:**
+```bash
+# Create .env file
+nano .env
+
+# Set secure permissions
+chmod 600 .env
+```
+
+Example `.env` content:
+```env
+BOT_TOKEN=your_production_bot_token_here
+OPENAI_API_KEY=your_production_openai_api_key_here
+AUTHORIZED_USER_ID=your_telegram_user_id_here
+NODE_ENV=production
+```
+
+3. **Start with PM2:**
+```bash
+# Start bot using ecosystem config
+pm2 start ecosystem.config.js
+
+# Save PM2 configuration
+pm2 save
+
+# Setup auto-restart on server reboot
+pm2 startup
+```
+
+### PM2 Management Commands
+
+```bash
+# Check status
+pm2 status
+
+# View logs
+pm2 logs telegram-molko-bot
+
+# Restart bot
+pm2 restart telegram-molko-bot
+
+# Stop bot
+pm2 stop telegram-molko-bot
+
+# Real-time monitoring
+pm2 monit
+
+# View detailed process info
+pm2 describe telegram-molko-bot
+```
+
+### Log Files
+
+- **Combined logs:** `/home/telegram-molko-bot/logs/combined.log`
+- **Error logs:** `/home/telegram-molko-bot/logs/err.log`
+- **Output logs:** `/home/telegram-molko-bot/logs/out.log`
+
+### Updates
+
+To update the bot on server:
+```bash
+cd /home/telegram-molko-bot
+git pull origin main
+npm install
+pm2 restart telegram-molko-bot
+```
