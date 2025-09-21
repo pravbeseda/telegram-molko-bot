@@ -2,8 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'telegram-molko-bot',
-      script: 'tsx',
-      args: 'bot.ts',
+      script: 'npx',
+      args: 'tsx bot.ts',
       cwd: '/home/telegram-molko-bot',
       instances: 1,
       autorestart: true,
