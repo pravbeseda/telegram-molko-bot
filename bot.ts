@@ -21,7 +21,7 @@ const bot = new Bot(process.env.BOT_TOKEN);
 // Main function to interact with OpenAI
 async function getOpenAIResponse(message: string): Promise<string> {
     const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-5-nano',
         messages: [
             { role: 'system', content: PROMPT },
             { role: 'user', content: message },
