@@ -1,4 +1,4 @@
-import { Bot, Context, ChatTypeContext } from 'grammy';
+import { Bot, Context, Filter } from 'grammy';
 import * as dotenv from 'dotenv';
 import OpenAI from 'openai';
 import * as fs from 'fs';
@@ -10,13 +10,15 @@ let PROMPT =
 
 dotenv.config();
 
-type TelegramMessageEvent = ChatTypeContext<
-    Context,
-    'private' | 'group' | 'supergroup'
->;
+type TelegramMessageEvent = Filter<Context, 'message:text'>;
+
+const botToken = process.env.BOT_TOKEN;
+if (!botToken) {
+    throw new Error('BOT_TOKEN is not set');
+}
 
 const openai = new OpenAI();
-const bot = new Bot(process.env.BOT_TOKEN);
+const bot = new Bot(botToken);
 
 // Main function to interact with OpenAI
 async function getOpenAIResponse(message: string): Promise<string> {
@@ -28,7 +30,11 @@ async function getOpenAIResponse(message: string): Promise<string> {
         ],
     });
 
-    return completion.choices[0].message.content;
+    const content = completion.choices[0].message.content;
+    if (!content) {
+        throw new Error('OpenAI returned an empty response');
+    }
+    return content;
 }
 
 // Common function to handle responses
@@ -48,12 +54,11 @@ async function handleUserMessage(ctx: TelegramMessageEvent) {
 }
 
 // Handling messages from Telegram users
-bot.on('message', async (ctx) => {
-    const event = ctx as TelegramMessageEvent;
+bot.on('message:text', async (ctx) => {
     if (
-        isPrivateChat(event) &&
+        isPrivateChat(ctx) &&
         ctx.message.text.startsWith('/prompt ') &&
-        isAuthorizedUser(event)
+        isAuthorizedUser(ctx)
     ) {
         const newPrompt = ctx.message.text.replace('/prompt ', '').trim();
         if (newPrompt) {
@@ -68,12 +73,12 @@ bot.on('message', async (ctx) => {
             });
         }
     } else if (
-        isPrivateChat(event) ||
-        isAddressedToBot(event) ||
-        isAnsweredToBot(event)
+        isPrivateChat(ctx) ||
+        isAddressedToBot(ctx) ||
+        isAnsweredToBot(ctx)
     ) {
         // console.log('Your User ID:', ctx.from?.id);
-        await handleUserMessage(event);
+        await handleUserMessage(ctx);
     }
 });
 
@@ -89,10 +94,7 @@ function isAddressedToBot(ctx: TelegramMessageEvent): boolean {
 }
 
 function isAnsweredToBot(ctx: TelegramMessageEvent): boolean {
-    return (
-        ctx.message.reply_to_message &&
-        ctx.message.reply_to_message.from?.id === bot.botInfo?.id
-    );
+    return ctx.message.reply_to_message?.from?.id === bot.botInfo.id;
 }
 
 function loadCustomPrompt(): string | undefined {
