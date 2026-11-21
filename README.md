@@ -46,14 +46,14 @@ npx tsx bot.ts
 ## Usage
 
 ### In private chats
-- Bot responds to any messages
+- Bot responds to any text message; stickers, photos and other media are ignored
 - Authorized user can change the prompt with command:
   ```
   /prompt new_prompt_for_bot
   ```
 
 ### In group chats
-Bot responds in two cases:
+Bot responds to text messages in two cases:
 1. **Name mention**: when message contains "bri" or "бри"
 2. **Reply to bot message**: when replying to bot's message
 
